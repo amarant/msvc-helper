@@ -1,0 +1,17 @@
+[package]
+name = "msvc-helper"
+version = "0.1.0"
+authors = ["Arnaud Marant <arnaudmarant@gmail.com>"]
+
+[lib]
+name = "msvc_helper"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sdk_installed"
+path = "src/bin.rs"
+
+[dependencies]
+winreg = "0.5.0"
+log = "0.4"
+env_logger = "0.5.4"
