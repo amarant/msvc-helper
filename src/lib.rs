@@ -195,9 +195,10 @@ pub fn get_windows_sdk() -> Vec<WindowsSdk> {
         );
     }
     windows_sdk.sort_by(|a, b| {
-        a.windows_target_platform_version.split(".")
+        a.windows_target_platform_version
+            .split(".")
             .zip(b.windows_target_platform_version.split("."))
-            .map(|(j, i)|{
+            .map(|(j, i)| {
                 let len_cmp = i.len().cmp(&j.len());
                 if len_cmp != Ordering::Equal {
                     return len_cmp;
@@ -210,4 +211,39 @@ pub fn get_windows_sdk() -> Vec<WindowsSdk> {
     });
     windows_sdk.dedup();
     windows_sdk
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate env_logger;
+
+    use super::get_windows_sdk;
+    use std::process::Command;
+
+    #[test]
+    fn get_windows_SDK() {
+        env_logger::init();
+        let mut powershell_windows_sdk_output = Command::new("cmd")
+            .args(&[
+                "powershell",
+                "-ExecutionPolicy",
+                "RemoteSigned",
+                "-File",
+                "powershell\\getWindowsSDK.ps1",
+            ])
+            .output()
+            .expect("failed to execute process");
+        error!("stdout: {:?}", powershell_windows_sdk_output.stdout);
+        error!("stderr: {:?}", powershell_windows_sdk_output.stderr);
+        let powershell_windows_sdk =
+            String::from_utf8_lossy(&powershell_windows_sdk_output.stdout);
+        assert_eq!(
+            get_windows_sdk()
+                .iter()
+                .next()
+                .unwrap()
+                .windows_target_platform_version,
+            powershell_windows_sdk
+        );
+    }
 }
