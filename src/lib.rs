@@ -217,24 +217,60 @@ pub fn get_windows_sdk() -> Vec<WindowsSdk> {
 mod tests {
     extern crate env_logger;
 
-    use super::get_windows_sdk;
+    use super::{get_windows_sdk, SdkVersion};
     use std::process::Command;
+
+    fn get_powershell_windows_sdk_version(param_opt: Option<&str>) -> Option<String> {
+        let mut args = Vec::new();
+        args.push("powershell\\getWindowsSDK.ps1");
+        if let Some(param) = param_opt {
+            args.push(param);
+        }
+        let powershell_windows_sdk_output = Command::new("powershell")
+            .args(&args)
+            .output()
+            .expect("failed to execute process");
+        if (powershell_windows_sdk_output.stderr.len() > 0) {
+            return None;
+        }
+        let powershell_windows_sdk = String::from_utf8_lossy(&powershell_windows_sdk_output.stdout);
+        Some(powershell_windows_sdk.replace("\r\n", ""))
+    }
 
     #[test]
     fn same_latest_version_than_powershell() {
-        env_logger::init();
-        let powershell_windows_sdk_output = Command::new("powershell")
-            .args(&["powershell\\getWindowsSDK.ps1"])
-            .output()
-            .expect("failed to execute process");
-        let powershell_windows_sdk = String::from_utf8_lossy(&powershell_windows_sdk_output.stdout);
-        let powershell_windows_sdk = powershell_windows_sdk.replace("\r\n", "");
+        let powershell_windows_sdk = get_powershell_windows_sdk_version(None);
         assert_eq!(
             get_windows_sdk()
                 .iter()
                 .next()
-                .unwrap()
-                .windows_target_platform_version,
+                .map(|v| v.windows_target_platform_version.clone()),
+            powershell_windows_sdk
+        );
+    }
+
+    #[test]
+    fn same_win10_version_than_powershell() {
+        let powershell_windows_sdk = get_powershell_windows_sdk_version(Some("-DisableWin81SDK"));
+        assert_eq!(
+            get_windows_sdk()
+                .iter()
+                .filter(|v| v.windows_version == SdkVersion::Win10)
+                .next()
+                .map(|v| v.windows_target_platform_version.clone()),
+            powershell_windows_sdk
+        );
+    }
+
+    #[test]
+    fn same_win8_version_than_powershell() {
+        let powershell_windows_sdk = get_powershell_windows_sdk_version(Some("-DisableWin10SDK"));
+        assert_eq!(
+            get_windows_sdk()
+                .iter()
+                .filter(|v| v.windows_version == SdkVersion::Win8)
+                .next()
+                .map(|v| v.windows_target_platform_version.clone()),
             powershell_windows_sdk
         );
     }
