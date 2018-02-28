@@ -42,7 +42,7 @@ fn get_windows_sdk_path_from_regsitry_logged(reg_path: &str, reg_value: &str) ->
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum SdkVersion {
-    Win8_1,
+    Win8,
     Win10,
 }
 
@@ -135,7 +135,7 @@ fn check_add_windows_81_sdk(
             //TODO sort ?
 
             valid_instance.push(WindowsSdk {
-                windows_version: SdkVersion::Win8_1,
+                windows_version: SdkVersion::Win8,
                 windows_target_platform_version: "8.1".into(),
                 path: path_buf,
             });
@@ -221,22 +221,14 @@ mod tests {
     use std::process::Command;
 
     #[test]
-    fn get_windows_SDK() {
+    fn same_latest_version_than_powershell() {
         env_logger::init();
-        let mut powershell_windows_sdk_output = Command::new("cmd")
-            .args(&[
-                "powershell",
-                "-ExecutionPolicy",
-                "RemoteSigned",
-                "-File",
-                "powershell\\getWindowsSDK.ps1",
-            ])
+        let powershell_windows_sdk_output = Command::new("powershell")
+            .args(&["powershell\\getWindowsSDK.ps1"])
             .output()
             .expect("failed to execute process");
-        error!("stdout: {:?}", powershell_windows_sdk_output.stdout);
-        error!("stderr: {:?}", powershell_windows_sdk_output.stderr);
-        let powershell_windows_sdk =
-            String::from_utf8_lossy(&powershell_windows_sdk_output.stdout);
+        let powershell_windows_sdk = String::from_utf8_lossy(&powershell_windows_sdk_output.stdout);
+        let powershell_windows_sdk = powershell_windows_sdk.replace("\r\n", "");
         assert_eq!(
             get_windows_sdk()
                 .iter()
