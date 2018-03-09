@@ -7,11 +7,10 @@ authors = ["Arnaud Marant <arnaudmarant@gmail.com>"]
 name = "msvc_helper"
 path = "src/lib.rs"
 
-[[bin]]
-name = "sdk_installed"
-path = "src/bin.rs"
-
 [dependencies]
 winreg = "0.5.0"
 log = "0.4"
 env_logger = "0.5.4"
+winapi = { version = "0.3.4", features = ["wtypes", "combaseapi", "oaidl", "objbase", "oleauto"] }
+wio = "0.2.0"
+lazy_static = "1.0"
