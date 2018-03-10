@@ -126,7 +126,7 @@ fn check_add_windows_81_sdk(
     debug!("Check {:?}", path_buf);
     path_buf.push("Include");
     if path_buf.exists() {
-        if let Ok(_) = path_buf.read_dir() {
+        if path_buf.read_dir().is_ok() {
             //TODO sort ?
 
             valid_instance.push(WindowsSdk {
@@ -156,14 +156,14 @@ pub fn get_windows_sdk() -> Vec<WindowsSdk> {
         env::var_os(PROGRAM_FILES_ENV).and_then(|p| p.into_string().ok())
     {
         windows_sdk =
-            check_add_windows_10_sdk(&program_files_path, Some(&WIN_KITS_PATH_10), windows_sdk);
+            check_add_windows_10_sdk(&program_files_path, Some(WIN_KITS_PATH_10), windows_sdk);
     }
     if let Some(program_files_x86_path) =
         env::var_os(PROGRAM_FILES_X86_ENV).and_then(|p| p.into_string().ok())
     {
         windows_sdk = check_add_windows_10_sdk(
             &program_files_x86_path,
-            Some(&WIN_KITS_PATH_10),
+            Some(WIN_KITS_PATH_10),
             windows_sdk,
         );
     }
@@ -178,21 +178,21 @@ pub fn get_windows_sdk() -> Vec<WindowsSdk> {
         env::var_os(PROGRAM_FILES_ENV).and_then(|p| p.into_string().ok())
     {
         windows_sdk =
-            check_add_windows_81_sdk(&program_files_path, Some(&WIN_KITS_PATH_81), windows_sdk);
+            check_add_windows_81_sdk(&program_files_path, Some(WIN_KITS_PATH_81), windows_sdk);
     }
     if let Some(program_files_x86_path) =
         env::var_os(PROGRAM_FILES_X86_ENV).and_then(|p| p.into_string().ok())
     {
         windows_sdk = check_add_windows_81_sdk(
             &program_files_x86_path,
-            Some(&WIN_KITS_PATH_81),
+            Some(WIN_KITS_PATH_81),
             windows_sdk,
         );
     }
     windows_sdk.sort_by(|a, b| {
         a.windows_target_platform_version
-            .split(".")
-            .zip(b.windows_target_platform_version.split("."))
+            .split('.')
+            .zip(b.windows_target_platform_version.split('.'))
             .map(|(j, i)| {
                 let len_cmp = i.len().cmp(&j.len());
                 if len_cmp != Ordering::Equal {
@@ -200,8 +200,7 @@ pub fn get_windows_sdk() -> Vec<WindowsSdk> {
                 }
                 i.cmp(j)
             })
-            .filter(|c| c != &Ordering::Equal)
-            .next()
+            .find(|c| c != &Ordering::Equal)
             .unwrap_or(Ordering::Equal)
     });
     windows_sdk.dedup();

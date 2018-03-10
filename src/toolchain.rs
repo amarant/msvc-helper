@@ -39,7 +39,7 @@ fn os_to_res_pathbuf(res: Result<OsString, i32>) -> Result<PathBuf, Option<i32>>
     }
 }
 
-fn transform(instance: SetupInstance) -> Result<VisualStudioInstallationInstance, Option<i32>> {
+fn transform(instance: &SetupInstance) -> Result<VisualStudioInstallationInstance, Option<i32>> {
     let instance_id = os_to_res_string(instance.instance_id())?;
     let installation_name = os_to_res_string(instance.installation_name())?;
     let installation_path = os_to_res_pathbuf(instance.installation_path())?;
@@ -61,14 +61,14 @@ pub fn get_toolchains() -> Vec<VisualStudioInstallationInstance> {
     let mut toolchains: Vec<VisualStudioInstallationInstance> = Vec::new();
     for instance in iter {
         let mut instance: VisualStudioInstallationInstance = match instance {
-            Ok(instance) => match transform(instance) {
+            Ok(instance) => match transform(&instance) {
                 Ok(instance) => instance,
                 Err(_) => continue,
             },
             Err(_) => continue,
         };
         let installation_version = instance.installation_version.clone();
-        let split: Vec<&str> = installation_version.split(".").collect();
+        let split: Vec<&str> = installation_version.split('.').collect();
         let major_version = split[0];
         let medium_version = split[1];
         let platform_toolset = match (major_version, medium_version) as (&str, &str) {
@@ -94,8 +94,8 @@ pub fn get_toolchains() -> Vec<VisualStudioInstallationInstance> {
     }
     toolchains.sort_by(|a, b| {
         a.installation_version
-            .split(".")
-            .zip(b.installation_version.split("."))
+            .split('.')
+            .zip(b.installation_version.split('.'))
             .map(|(j, i)| {
                 let len_cmp = i.len().cmp(&j.len());
                 if len_cmp != Ordering::Equal {
@@ -103,8 +103,7 @@ pub fn get_toolchains() -> Vec<VisualStudioInstallationInstance> {
                 }
                 i.cmp(j)
             })
-            .filter(|c| c != &Ordering::Equal)
-            .next()
+            .find(|c| c != &Ordering::Equal)
             .unwrap_or(Ordering::Equal)
     });
     toolchains
