@@ -67,17 +67,29 @@ pub fn get_toolchains() -> Vec<VisualStudioInstallationInstance> {
             },
             Err(_) => continue,
         };
-        let major_version = &instance.installation_version.clone()[..2];
-        match &major_version as &str {
-            "15" => {
-                instance.set_platform_toolset("v141".into());
-                toolchains.push(instance);
-            }
-            "14" => {
-                instance.set_platform_toolset("v140".into());
-                toolchains.push(instance);
-            }
-            _ => (),
+        let installation_version = instance.installation_version.clone();
+        let split: Vec<&str> = installation_version.split(".").collect();
+        let major_version = split[0];
+        let medium_version = split[1];
+        let platform_toolset = match (major_version, medium_version) as (&str, &str) {
+            // from http://marcofoco.com/microsoft-visual-c-version-map/
+            ("15", _) => Some("v141"),
+            ("14", _) => Some("v140"),
+            ("12", _) => Some("v120"),
+            ("11", _) => Some("v110"),
+            ("10", _) => Some("v100"),
+            ("9", _) => Some("v90"),
+            ("8", _) => Some("v80"),
+            ("7", "1") => Some("v71"),
+            ("7", "0") => Some("v70"),
+            ("6", _) => Some("v60"),
+            _ => None,
+        };
+        if let Some(platform_toolset) = platform_toolset {
+            instance.set_platform_toolset(platform_toolset.into());
+            toolchains.push(instance);
+        } else {
+            continue;
         }
     }
     toolchains.sort_by(|a, b| {
