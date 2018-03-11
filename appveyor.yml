@@ -1,0 +1,37 @@
+environment:
+  global:
+    RUST_VERSION: stable
+    CRATE_NAME: msvc_helper
+
+  matrix:
+    - TARGET: x86_64-pc-windows-msvc
+
+install:
+  - curl -sSf -o rustup-init.exe https://win.rustup.rs/
+  - rustup-init.exe -y --default-host %TARGET% --default-toolchain %RUST_VERSION%
+  - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - rustc -Vv
+  - cargo -V
+
+test_script:
+  - cargo build --target %TARGET% &&
+    cargo build --target %TARGET% --release &&
+    cargo test --target %TARGET% &&
+    cargo test --target %TARGET% --release
+
+cache:
+  - C:\Users\appveyor\.cargo\registry
+  - target
+
+branches:
+  only:
+    # Release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
+
+notifications:
+  - provider: Email
+    on_build_success: false
+
+# Building is done in the test phase, so we disable Appveyor's build phase.
+build: false
